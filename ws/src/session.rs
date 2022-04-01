@@ -199,7 +199,6 @@ impl<M: core::Metadata, S: core::Middleware<M>> Session<M, S> {
 	}
 
 	fn verify_host(&self, host: Option<&[u8]>) -> Option<ws::Response> {
-		let host = req.header("host").map(|x| &x[..]);
 		if !header_is_allowed(&self.allowed_hosts, host) {
 			warn!(
 				"Blocked connection to WebSockets server with untrusted host: {:?}",
