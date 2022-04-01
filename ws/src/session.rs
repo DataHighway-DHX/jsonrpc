@@ -182,6 +182,10 @@ impl<M: core::Metadata, S: core::Middleware<M>> Session<M, S> {
 		req.header("origin").map(|x| &x[..])
 	}
 
+	fn read_host<'a>(&self, req: &'a ws::Request) -> Option<&'a [u8]> {
+		req.header("host").map(|x| &x[..])
+	}
+
 	fn verify_origin(&self, origin: Option<&[u8]>) -> Option<ws::Response> {
 		if !header_is_allowed(&self.allowed_origins, origin) {
 			warn!(
@@ -194,7 +198,7 @@ impl<M: core::Metadata, S: core::Middleware<M>> Session<M, S> {
 		}
 	}
 
-	fn verify_host(&self, req: &ws::Request) -> Option<ws::Response> {
+	fn verify_host(&self, host: Option<&[u8]>) -> Option<ws::Response> {
 		let host = req.header("host").map(|x| &x[..]);
 		if !header_is_allowed(&self.allowed_hosts, host) {
 			warn!(
@@ -229,9 +233,14 @@ where
 			}
 		}
 
+		let host = self.read_host(req);
+		warn!(
+			"Read from request host: {:?}",
+			host.and_then(|s| std::str::from_utf8(s).ok()),
+		);
 		if action.should_verify_hosts() {
 			// Verify host header.
-			if let Some(response) = self.verify_host(req) {
+			if let Some(response) = self.verify_host(host) {
 				return Ok(response);
 			}
 		}
